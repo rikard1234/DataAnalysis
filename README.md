@@ -11,4 +11,4 @@
 #dodatkow moze byc wiele i do roznych dan dopasowen ogornik do burgera czy hotdoga
 #widget oddzielnym requestem
 #insihgts
-#as das s
+#as das scx
