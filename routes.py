@@ -75,11 +75,12 @@ class TopToppingsResponse(BaseModel):
 #load_dotenv(".env.development.deploy")
 
 security = HTTPBasic()
+print(os.environ.get("API_USERNAME", ""))
 
 def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = os.environ.get("API_USERNAME", "")
     correct_password = os.environ.get("API_PASSWORD", "")
-
+    print(os.environ.get("API_USERNAME", ""))
     is_correct_username = secrets.compare_digest(credentials.username, correct_username)
     is_correct_password = secrets.compare_digest(credentials.password, correct_password)
 
