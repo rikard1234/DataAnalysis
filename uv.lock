@@ -52,6 +52,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "dotenv" },
     { name = "fastapi" },
+    { name = "logging" },
     { name = "pandas" },
     { name = "uvicorn" },
 ]
@@ -60,6 +61,7 @@ dependencies = [
 requires-dist = [
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "fastapi", specifier = ">=0.115.12" },
+    { name = "logging", specifier = ">=0.4.9.6" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "uvicorn", specifier = ">=0.34.3" },
 ]
@@ -106,6 +108,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442, upload-time = "2024-09-15T18:07:37.964Z" },
 ]
+
+[[package]]
+name = "logging"
+version = "0.4.9.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/4b/979db9e44be09f71e85c9c8cfc42f258adfb7d93ce01deed2788b2948919/logging-0.4.9.6.tar.gz", hash = "sha256:26f6b50773f085042d301085bd1bf5d9f3735704db9f37c1ce6d8b85c38f2417", size = 96029, upload-time = "2013-06-04T23:43:22.086Z" }
 
 [[package]]
 name = "numpy"

@@ -11,8 +11,12 @@ import secrets
 import os
 from dotenv import load_dotenv
 
+import logging
 
-app = FastAPI()
+# Setup basic logging config
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class SalesQuery(BaseModel):
     start_date: date = Field(..., description="Start date in YYYY-MM-DD format")
@@ -72,15 +76,19 @@ class TopToppingsResponse(BaseModel):
 
 #
 
-#load_dotenv(".env.development.deploy")
+load_dotenv()
 
 security = HTTPBasic()
-print(os.environ.get("API_USERNAME", ""))
+
 
 def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = os.environ.get("API_USERNAME", "")
     correct_password = os.environ.get("API_PASSWORD", "")
-    print(os.environ.get("API_USERNAME", ""))
+    if not correct_username:
+        logger.warning("API_USERNAME not set in environment variables")
+    else:
+        logger.info(f"API_USERNAME loaded: {correct_username}")
+
     is_correct_username = secrets.compare_digest(credentials.username, correct_username)
     is_correct_password = secrets.compare_digest(credentials.password, correct_password)
 
@@ -92,14 +100,16 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
         )
 
 
+app = FastAPI(dependencies=[Depends(authenticate)])
+
 
 @app.get("/total_sales_value", response_model=TotalSalesResponse)
 def totalSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    end_date: date = Query(..., description="End date in YYYY-MM-DD")
 ):
     try:
+        logger.info(f"API_USERNAME loaded: {os.environ.get("API_USERNAME", "")}")
         dishes_df = pd.read_csv("data/dishes.csv")
 
         dishes_df["date"] = pd.to_datetime(dishes_df["date"]).dt.date
@@ -120,8 +130,7 @@ def totalSales(
 @app.get("/average_sales", response_model=AverageSalesResponse)
 def averageSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    end_date: date = Query(..., description="End date in YYYY-MM-DD")
 ):
     try:
         df = pd.read_csv("data/dishes.csv")
@@ -156,8 +165,7 @@ def averageSales(
 @app.get("/top_by_units", response_model=TopUnitsResponse)
 def topByUnits(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    end_date: date = Query(..., description="End date in YYYY-MM-DD")
 ):
     try:
         df = pd.read_csv("data/dishes.csv")
@@ -195,8 +203,7 @@ def topByUnits(
 @app.get("/total_sales_count", response_model=TotalSalesCountResponse)
 def totalSalesCount(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    end_date: date = Query(..., description="End date in YYYY-MM-DD")
     ):
 
     try:
@@ -223,8 +230,7 @@ def totalSalesCount(
 @app.get("/most_frequent_dish_topping", response_model=MostFrequentDishToppingResponse)
 def mostFrequentDishTopping(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    end_date: date = Query(..., description="End date in YYYY-MM-DD")
     ):
     try:
         dishes_df = pd.read_csv("data/dishes.csv")  
@@ -265,8 +271,7 @@ def mostFrequentDishTopping(
 def topToppings(
     start_date: date = Query(None, description="Start date in YYYY-MM-DD"),
     end_date: date = Query(None, description="End date in YYYY-MM-DD"),
-    limit: int = Query(3, description="Number of top toppings to return"),
-    credentials: HTTPBasicCredentials = Depends(authenticate)
+    limit: int = Query(3, description="Number of top toppings to return")
 ):
     try:
         order_items_df = pd.read_csv("data/dishes.csv") 
