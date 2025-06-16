@@ -101,7 +101,7 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 
 
 app = FastAPI(dependencies=[Depends(authenticate)])
-
+#
 
 @app.get("/total_sales_value", response_model=TotalSalesResponse)
 def totalSales(
