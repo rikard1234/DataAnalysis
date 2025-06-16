@@ -109,7 +109,7 @@ def totalSales(
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
 ):
     try:
-        logger.info(f"API_USERNAME loaded: {os.environ.get("API_USERNAME", "")}")
+        logger.info(f"API_USERNAME loaded: {os.environ.get('API_USERNAME', '')}")
         dishes_df = pd.read_csv("data/dishes.csv")
 
         dishes_df["date"] = pd.to_datetime(dishes_df["date"]).dt.date
