@@ -5,6 +5,12 @@ from pydantic import BaseModel, Field
 import pandas as pd
 from typing import List, Dict
 from datetime import date
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+import os
+from dotenv import load_dotenv
+
 
 app = FastAPI()
 
@@ -66,10 +72,31 @@ class TopToppingsResponse(BaseModel):
 
 
 
+#load_dotenv(".env.development.deploy")
+
+security = HTTPBasic()
+
+def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = os.environ.get("APP_USERNAME", "")
+    correct_password = os.environ.get("APP_PASSWORD", "")
+
+    is_correct_username = secrets.compare_digest(credentials.username, correct_username)
+    is_correct_password = secrets.compare_digest(credentials.password, correct_password)
+
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+
+
 @app.get("/total_sales_value", response_model=TotalSalesResponse)
-def total_sales(
+def totalSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD")
+    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
 ):
     try:
         dishes_df = pd.read_csv("data/dishes.csv")
@@ -90,9 +117,10 @@ def total_sales(
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 @app.get("/average_sales", response_model=AverageSalesResponse)
-def average_sales(
+def averageSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD")
+    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
 ):
     try:
         df = pd.read_csv("data/dishes.csv")
@@ -125,9 +153,10 @@ def average_sales(
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 @app.get("/top_by_units", response_model=TopUnitsResponse)
-def top_by_units(
+def topByUnits(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD")
+    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
 ):
     try:
         df = pd.read_csv("data/dishes.csv")
@@ -163,9 +192,10 @@ def top_by_units(
     
 
 @app.get("/total_sales_count", response_model=TotalSalesCountResponse)
-def total_sales_count(
+def totalSalesCount(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD")
+    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
     ):
 
     try:
@@ -190,10 +220,11 @@ def total_sales_count(
 
     
 @app.get("/most_frequent_dish_topping", response_model=MostFrequentDishToppingResponse)
-def most_frequent_dish_topping(
+def mostFrequentDishTopping(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
-    end_date: date = Query(..., description="End date in YYYY-MM-DD")
-):
+    end_date: date = Query(..., description="End date in YYYY-MM-DD"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
+    ):
     try:
         dishes_df = pd.read_csv("data/dishes.csv")  
         toppings_df = pd.read_csv("data/dishes_toppings.csv")  
@@ -230,10 +261,11 @@ def most_frequent_dish_topping(
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/top_toppings", response_model=TopToppingsResponse)
-def top_toppings(
+def topToppings(
     start_date: date = Query(None, description="Start date in YYYY-MM-DD"),
     end_date: date = Query(None, description="End date in YYYY-MM-DD"),
-    limit: int = Query(3, description="Number of top toppings to return")
+    limit: int = Query(3, description="Number of top toppings to return"),
+    credentials: HTTPBasicCredentials = Depends(authenticate)
 ):
     try:
         order_items_df = pd.read_csv("data/dishes.csv") 
@@ -260,4 +292,3 @@ def top_toppings(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
     
-
