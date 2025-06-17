@@ -103,7 +103,7 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 
 app = FastAPI(dependencies=[Depends(authenticate)])
 
-
+#
 @app.get("/")
 def root():
     return {"message": "Welcome to the Data Analysis Service API. Please use the endpoints with proper credentials."}
