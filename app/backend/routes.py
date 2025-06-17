@@ -10,30 +10,32 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import secrets
 import os
 from dotenv import load_dotenv
-
+from fastapi.openapi.docs import get_swagger_ui_html
 import logging
+from fastapi_camelcase import CamelModel
 
-# Setup basic logging config
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class SalesQuery(BaseModel):
+class SalesQuery(CamelModel):
     start_date: date = Field(..., description="Start date in YYYY-MM-DD format")
     end_date: date = Field(..., description="End date in YYYY-MM-DD format")
 
-class DaySalesValue(BaseModel):
+class DaySalesValue(CamelModel):
     date: date
     income: float
 
-class DaySalesAmount(BaseModel):
+class DaySalesAmount(CamelModel):
     date: date
     amount: float
 
-class TotalSalesResponse(BaseModel):
-    total_sales: float
+class TotalSalesResponse(CamelModel):
+    total_sales: float 
 
-class AverageSalesResponse(BaseModel):
+
+
+class AverageSalesResponse(CamelModel):
     percentage_change: float
     total_income: float
     average_daily_income: float
@@ -41,42 +43,41 @@ class AverageSalesResponse(BaseModel):
     income_per_day: List[DaySalesValue]  
 
     
-class TopUnintsResponse(BaseModel):
+class TopUnintsResponse(CamelModel):
     top_product_id: List
     top_quantity: List
     top_percentage: List
 
 
-class TotalSalesCountResponse(BaseModel):
+class TotalSalesCountResponse(CamelModel):
     count_per_day: List[DaySalesAmount] 
 
 
-class TopProduct(BaseModel):
+class TopProduct(CamelModel):
     product_id: int
     count: int
     percentage: float
 
-class TopUnitsResponse(BaseModel):
+class TopUnitsResponse(CamelModel):
     tops: List[TopProduct]
 
-class DishToppingCount(BaseModel):
+class DishToppingCount(CamelModel):
     dish_id: int
     topping_id: int
     count: int
 
-class MostFrequentDishToppingResponse(BaseModel):
+class MostFrequentDishToppingResponse(CamelModel):
     dish_topping: DishToppingCount
 
-class ToppingCount(BaseModel):
+class ToppingCount(CamelModel):
     topping_id: int
     count: int
 
-class TopToppingsResponse(BaseModel):
+class TopToppingsResponse(CamelModel):
     toppings: List[ToppingCount]
 
-#
 
-load_dotenv()
+load_dotenv(".env.development.deploy")
 
 security = HTTPBasic()
 
@@ -101,13 +102,21 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 
 
 app = FastAPI(dependencies=[Depends(authenticate)])
-#
+
+
 @app.get("/")
 def root():
     return {"message": "Welcome to the Data Analysis Service API. Please use the endpoints with proper credentials."}
 
 
-@app.get("/total_sales_value", response_model=TotalSalesResponse)
+@app.get("/docs", include_in_schema=False)
+async def get_documentation(credentials: HTTPBasicCredentials = Depends(authenticate)):
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="API Docs")
+
+
+@app.get("/restaurants/{restaurantId}/total-sales-value", 
+         response_model=TotalSalesResponse, 
+         summary="Total sales")
 def totalSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
@@ -131,7 +140,9 @@ def totalSales(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
     
-@app.get("/average_sales", response_model=AverageSalesResponse)
+@app.get("/restaurants/{restaurantId}/average-sales", 
+         response_model=AverageSalesResponse, 
+         summary="Average sales",)
 def averageSales(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
@@ -153,11 +164,11 @@ def averageSales(
         percentage_change = 0.0
 
         return AverageSalesResponse(
-            percentage_change=round(percentage_change, 2),
-            total_income=round(total_income, 2),
-            average_daily_income=round(average_daily_income, 2),
-            highest_daily_income=round(highest_daily_income, 2),
-            income_per_day=[
+            percentageChange=round(percentage_change, 2),
+            totalIncome=round(total_income, 2),
+            averageDailyIncome=round(average_daily_income, 2),
+            highestDailyIncome=round(highest_daily_income, 2),
+            incomePerDay=[
                 DaySalesValue(date=row["date"], income=round(row["income"], 2))
                 for _, row in daily_sales.iterrows()
             ]
@@ -166,7 +177,9 @@ def averageSales(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
     
-@app.get("/top_by_units", response_model=TopUnitsResponse)
+@app.get("/restaurants/{restaurantId}/top-by-units", 
+         response_model=TopUnitsResponse, 
+         summary = "Top by units")
 def topByUnits(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
@@ -204,7 +217,9 @@ def topByUnits(
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 
-@app.get("/total_sales_count", response_model=TotalSalesCountResponse)
+@app.get("/restaurants/{restaurantId}/total-sales-count", 
+         response_model = TotalSalesCountResponse, 
+         summary = "Total sales count")
 def totalSalesCount(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
@@ -231,7 +246,9 @@ def totalSalesCount(
     
 
     
-@app.get("/most_frequent_dish_topping", response_model=MostFrequentDishToppingResponse)
+@app.get("/restaurants/{restaurantId}/most-frequent-dish-topping", 
+         response_model = MostFrequentDishToppingResponse, 
+         summary = "Most frequent dish topping combo")
 def mostFrequentDishTopping(
     start_date: date = Query(..., description="Start date in YYYY-MM-DD"),
     end_date: date = Query(..., description="End date in YYYY-MM-DD")
@@ -271,7 +288,9 @@ def mostFrequentDishTopping(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-@app.get("/top_toppings", response_model=TopToppingsResponse)
+@app.get("/restaurants/{restaurantId}/top-toppings", 
+         response_model = TopToppingsResponse, 
+         summary = "Top toppings")
 def topToppings(
     start_date: date = Query(None, description="Start date in YYYY-MM-DD"),
     end_date: date = Query(None, description="End date in YYYY-MM-DD"),
